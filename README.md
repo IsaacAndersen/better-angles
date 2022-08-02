@@ -9,6 +9,8 @@ i have some photos of my dog that i'd like to organize based on the direction my
 
 the editor will take a path to some photos. it'll output some files that contain an x-y-z rotation & metadata for each photo processed.
 
+### tech
+probably gonna do some vanilla js + three.js 
 
 ### metadata
 
@@ -18,6 +20,7 @@ the editor will take a path to some photos. it'll output some files that contain
 | `y` | rot (degrees?) |
 | `z` | rot (degrees?) |
 | `timeToProcess` | time spent looking at this photo in the editor (seconds) |
+
 
 ## timeline
 
