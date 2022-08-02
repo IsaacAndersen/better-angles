@@ -16,9 +16,9 @@ probably gonna do some vanilla js + three.js
 
 | attribute | description |
 |-----------|-------------|
-| `x` | rot (degrees?) |
-| `y` | rot (degrees?) |
-| `z` | rot (degrees?) |
+| `x` | rotation (degrees?) |
+| `y` | rotation (degrees?) |
+| `z` | rotation (degrees?) |
 | `timeToProcess` | time spent looking at this photo in the editor (seconds) |
 
 
