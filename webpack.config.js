@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const InstallPlugin = require('npm-install-webpack-plugin');
 
 
 module.exports = {
@@ -13,7 +14,8 @@ module.exports = {
     }),
     new ESLintPlugin({
         fix: true,
-    })
+    }),
+    new InstallPlugin()
   ],
   module: {
     rules: [
