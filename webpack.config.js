@@ -1,28 +1,15 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ESLintPlugin = require('eslint-webpack-plugin');
 
 module.exports = {
-  mode: "development", // "production" | "development" | "none"
+  mode: "development",
   entry: './src/index.ts',
   devtool: 'inline-source-map',
   plugins: [
     new HtmlWebpackPlugin({
       title: 'better angles',
-    }),
-    new ESLintPlugin({
-        fix: true,
-    }),
+    })
   ],
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/,
-      },
-    ],
-  },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
@@ -30,9 +17,15 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
+    assetModuleFilename: 'images/[hash][ext][query]'
   },
   module: {
     rules: [
+    {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+        },
       {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader'],
