@@ -11,27 +11,17 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 const scene = new THREE.Scene();
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-
 // scene.background = new THREE.Color(0x00ffff);
-
-// Definte types.
-
-
-
-
-const imageRotator = new ImageRotator();
-
-scene.add(imageRotator.threeObject);
-
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-const controls = new OrbitControls( camera, renderer.domElement );
-controls.enableZoom = false;
-
-//controls.update() must be called after any manual changes to the camera's transform
 camera.position.set( 20, 0, 0);
 camera.lookAt(new Vector3(0, 0, 0));
+
+const imageRotator = new ImageRotator();
+scene.add(imageRotator.threeObject);
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableZoom = false;
 controls.update();
 
 // display current angles
