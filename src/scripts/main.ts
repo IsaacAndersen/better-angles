@@ -1,11 +1,50 @@
+import * as _ from "lodash";
 import * as THREE from 'three';
-import { Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GUI } from 'dat.gui';
+import { loadImages, loadJson } from './jsonLoader';
+
+const jsonData = loadJson();
+const imageData = loadImages();
+
+type ImageRotationData = {
+    rotation: THREE.Euler;
+    imageName: string;
+    image: string;
+    texture: THREE.Texture;
+}
+
+const imageRotationData = Object.keys(jsonData).map(key => {
+    const data = jsonData[key] as any;
+    const eulerAngle = new THREE.Euler(data["_x"], data["_y"], data["_z"], data["_order"]);
+    const image = document.createElement("img");
+    image.src = imageData[key]
+    image.id = key;
+    image.style.display = "none";
+    document.body.appendChild(image);
+    return {
+        rotation: eulerAngle,
+        imageName: key,
+        image: imageData[key],
+        texture: new THREE.Texture(image)
+    }
+});
+
+console.log(jsonData);
+
+Object.keys(jsonData).map(key => {
+    const data = jsonData[key];
+})
+
+const getEulerDistance = (a: THREE.Euler, b: THREE.Euler) => {
+    const x = Math.pow(a.x - b.x, 2);
+    const y = Math.pow(a.y - b.y, 2);
+    const z = Math.pow(a.z - b.z, 2);
+    return Math.sqrt(x + y + z);
+}
+
 
 // TODO: does it make the most sense to write this as a class?
-const screenshot = require('../images/m2.jpeg');
-
 const image = document.createElement("img");
 image.id = "myImage";
 image.style.display = "none";
@@ -72,14 +111,14 @@ const makeImage = (params: PlaneParams) => {
     return image;
 };
 
-
-// A materal that displays the outline
-const outlineMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.05,
-});
+// Display an image on a sprite
+const makeSprite = (params: PlaneParams) => {
+    const map = new THREE.TextureLoader().load( 'sprite.png' );
+    const material = new THREE.SpriteMaterial( { map } );
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(10, 10, 10);
+    return sprite;
+}
 
 const compassRingParams: PlaneParams[] = [
     // Green => Rotation about X axis
@@ -94,12 +133,16 @@ compassRingParams
     .map(makeRing)
     .forEach(ring => { scene.add(ring) });
 
-const images = compassRingParams
+const sprite = compassRingParams
     .slice(0, 1)
-    .map(makeImage);
-    
+    .map(makeSprite)[0];
 
-scene.add(...images);
+// const secondSprite = compassRingParams
+//     .slice(0, 1)
+//     .map(makeSprite)[0];
+
+scene.add(sprite);
+// scene.add(secondSprite);
 
 const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 scene.add( ambientLight );
@@ -123,117 +166,37 @@ div.style.color = "white";
 div.style.position = "absolute";
 div.style.bottom = "0px";
 div.style.left = (window.innerWidth - 160) + "px";
-
-const div2 = document.createElement("div");
-div2.style.width = "150px";
-div2.style.height = "150px";
-div2.style.background = "orange";
-div2.style.color = "white";
-div2.style.position = "absolute";
-div2.style.bottom = "0px";
-div2.style.right = "10 px";
-
-let files: FileList = null;
-const filePicker = document.createElement("input");
-filePicker.type = "file";
-filePicker.name = "filePicker";
-filePicker.id = "getFile";
-filePicker.multiple = true;
-filePicker.onchange = (event: any) => {
-    files = event.target.files;
-}
-
-div2.appendChild(filePicker);
-
 document.body.appendChild(div);
-document.body.appendChild(div2);
 
-const fileObject = {
-    fileNumber: -1,
-};
 
-// Make a GUI
-const gui = new GUI()
-const cameraFolder = gui.addFolder('Camera')
-cameraFolder.add(fileObject, 'fileNumber', -1, files?.length ?? 0)
-cameraFolder.open()
-
-const toDegrees = (radians: number) => {
-    return radians * (180 / Math.PI);
-}
-
-let oldFileIndex = fileObject.fileNumber;
-
+let lastImageName = "";
 export const animate = () => {
 	requestAnimationFrame( animate );
+    // woah slow
+    const sorted = imageRotationData.sort((a, b) => {
+        return getEulerDistance(a.rotation, camera.rotation) - getEulerDistance(b.rotation, camera.rotation);
+    })
+    const closestData = sorted[0];
+    // const secondClosest = sorted[1];
 
-	// required if controls.enableDamping or controls.autoRotate are set to true
-	controls.update();
-
-    cameraFolder.__controllers[0].max(filePicker?.files?.length ?? 0);
-    cameraFolder.__controllers[0].updateDisplay();
-    const azimuthDegrees = toDegrees(controls.getAzimuthalAngle());
-    const polarDegrees = toDegrees(controls.getPolarAngle());
-    div.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
-    const fileIndex = fileObject.fileNumber;
-    if (fileIndex !== oldFileIndex && files.item(fileIndex)) {
-        // Download the camera orientation
-        const blob = new Blob([JSON.stringify(camera.rotation)], {type: 'application/json'});
-        // (B) CREATE DOWNLOAD LINK
-        var url = window.URL.createObjectURL(blob);
-        var anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = files.item(fileIndex).name.split(".")[0] + ".json";
-        // (C) Force download
-        anchor.click();
-        window.URL.revokeObjectURL(url);
-        var reader = new FileReader();
+    const closestName = closestData.imageName;
+    if (lastImageName !== closestName) {
         var imgtag = document.getElementById("myImage") as HTMLImageElement;
+        imgtag.src = closestData.image;
 
-        reader.onload = (event: ProgressEvent<FileReader>) => {
-            imgtag.src = event.target.result as string;
-            images[0].children.forEach((child, _) => {
-                const mesh = (<THREE.Mesh> child);
-                // mesh.geometry.scale(ratio, 1, 1);
+        sprite.material.map = closestData.texture;
+        sprite.material.opacity = 0.85;
+        sprite.material.map.needsUpdate = true;
 
-                const material = mesh.material as THREE.MeshBasicMaterial;
-                const newTexture = new THREE.Texture(imgtag);
-    
-                if (child.name === "back") {
-                    texture.center = new THREE.Vector2(0.5, 0.5);
-                    texture.rotation = Math.PI;
-                }
-    
-                material.map = newTexture;
-                material.map.needsUpdate = true;
-            });
-        };
-
-        reader.readAsDataURL(files.item(fileIndex));
-        }
-    oldFileIndex = fileIndex;
-
-    // div.innerHTML += `<br>ratio: ${ratio}`;
-
+        // secondSprite.material.map = secondClosest.texture;
+        // secondSprite.material.opacity = 0.5;
+        // secondSprite.material.map.needsUpdate = true;
+        
+    }
+    lastImageName = closestName;
 	renderer.render( scene, camera );
-
 }
 
-window.addEventListener("keydown", (event) => {
-    event.preventDefault();
-    console.log("woah");
-    console.log(fileObject.fileNumber);
-    console.log(event.key);
-    if (event.key === "ArrowLeft") {
-        fileObject.fileNumber = (fileObject.fileNumber - 1 + files.length) % files.length;
-    }
-    if (event.key === "ArrowRight") {
-        fileObject.fileNumber = (fileObject.fileNumber + 1) % files.length;
-    }
-    console.log('new number')
-    console.log(fileObject.fileNumber);
-    return;
-});
 
 window.addEventListener( 'resize', onWindowResize, false );
 

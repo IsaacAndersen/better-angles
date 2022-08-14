@@ -1,1 +1,0 @@
-photos of my dog go here.
