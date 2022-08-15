@@ -5,6 +5,11 @@ type PlaneParams = {
     color: THREE.Color;
 };
 
+/**
+ * Creates an image plane with front and back faces.
+ * 
+ * @param addRotationRings Whether to display rotation rings around
+ */
 class ImageRotator {
     image: HTMLImageElement;
     threeObject: THREE.Object3D;
@@ -19,7 +24,7 @@ class ImageRotator {
         {rotation: new THREE.Euler(Math.PI / 2, 0, 0, 'XYZ'), color: new THREE.Color(0xff0000)},
     ];
 
-    constructor() {
+    constructor(addRotationRings: boolean = true) {
         const image = document.createElement("img");
         image.id = "" + Math.random();
         image.style.display = "none";
@@ -27,13 +32,15 @@ class ImageRotator {
         this.image = image;
         this.threeObject = new THREE.Object3D();
 
-        this.compassRingParams
-            .map(this.makeRing.bind(this));
-
         // Add an image, facing the camera.
         this.compassRingParams
             .slice(0, 1)
             .map(this.addImagePlane.bind(this));
+
+        if (addRotationRings) {
+            this.compassRingParams
+            .map(this.makeRing.bind(this));
+        }
     }
 
     makeRing(this: ImageRotator, params: PlaneParams) {

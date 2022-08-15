@@ -3,11 +3,13 @@ import { Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'dat.gui';
 import ImageRotator from './imageRotator';
+import ImageCropper from './imageCropper';
 
 
 // Setup THREE.js scene
 const renderer = new THREE.WebGLRenderer({
     antialias: true});
+// TODO: Make the renderer smaller.
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 const scene = new THREE.Scene();
@@ -17,14 +19,17 @@ const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.inner
 camera.position.set( 20, 0, 0);
 camera.lookAt(new Vector3(0, 0, 0));
 
-const imageRotator = new ImageRotator();
-scene.add(imageRotator.threeObject);
-
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.enableZoom = false;
 controls.update();
 
-// display current angles
+// Add the image to the scene.
+const imageRotator = new ImageRotator();
+scene.add(imageRotator.threeObject);
+
+// Create an image cropper.
+const imageCropper = new ImageCropper(imageRotator.image);
+
 const div = document.createElement("div");
 // TODO: Move to CSS style or something.
 div.style.width = "150px";
@@ -76,8 +81,6 @@ const toDegrees = (radians: number) => {
 let oldFileIndex = fileObject.fileNumber;
 
 export const animate = () => {
-	requestAnimationFrame( animate );
-
 	// required if controls.enableDamping or controls.autoRotate are set to true
 	controls.update();
 
@@ -127,7 +130,7 @@ export const animate = () => {
     // div.innerHTML += `<br>ratio: ${ratio}`;
 
 	renderer.render( scene, camera );
-
+    requestAnimationFrame( animate );
 }
 
 window.addEventListener("keydown", (event) => {
