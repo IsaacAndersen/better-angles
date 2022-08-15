@@ -5,13 +5,23 @@ import { GUI } from 'dat.gui';
 import CanvasRotator from './canvasRotator';
 import ImageCropper, { BoundingBox } from './imageCropper';
 
+const table = document.createElement('table');
+const row = document.createElement('tr');
+table.appendChild(row);
+
+for (const columnId of ['filePicker', 'rotator', 'toolbox']) {
+    const column = document.createElement('td');
+    row.appendChild(column);
+    column.id = columnId;
+}
+document.body.appendChild(table);
 
 // Setup THREE.js scene
 const renderer = new THREE.WebGLRenderer({
     antialias: true});
 // TODO: Make the renderer smaller.
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize( window.innerWidth / 2, window.innerHeight / 2);
+document.getElementById('rotator').appendChild( renderer.domElement );
 const scene = new THREE.Scene();
 // scene.background = new THREE.Color(0x00ffff);
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -40,24 +50,18 @@ imageCropper.canvasRotator = canvasRotator;
 canvasRotator.croppedCanvas = imageCropper.croppedCanvas;
 document.body.appendChild(imageCropper.croppedCanvas);
 
-const div = document.createElement("div");
+const toolbox = document.createElement("div");
 // TODO: Move to CSS style or something.
-div.style.width = "150px";
-div.style.height = "150px";
-div.style.background = "red";
-div.style.color = "white";
-div.style.position = "absolute";
-div.style.bottom = "0px";
-div.style.left = (window.innerWidth - 160) + "px";
+toolbox.style.width = "150px";
+toolbox.style.height = "150px";
+toolbox.style.background = "red";
+toolbox.style.color = "white";
 
-const div2 = document.createElement("div");
-div2.style.width = "150px";
-div2.style.height = "150px";
-div2.style.background = "orange";
-div2.style.color = "white";
-div2.style.position = "absolute";
-div2.style.bottom = "0px";
-div2.style.right = "10 px";
+const filePickerSection = document.createElement("div");
+filePickerSection.style.width = "150px";
+filePickerSection.style.height = "150px";
+filePickerSection.style.background = "orange";
+filePickerSection.style.color = "white";
 
 let files: FileList = null;
 const filePicker = document.createElement("input");
@@ -73,11 +77,11 @@ const downloadAnchor = document.createElement("a");
 downloadAnchor.innerHTML = "Download Data";
 downloadAnchor.href = "#";
 
-div2.appendChild(filePicker);
-div2.appendChild(downloadAnchor);
+filePickerSection.appendChild(filePicker);
+filePickerSection.appendChild(downloadAnchor);
 
-document.body.appendChild(div);
-document.body.appendChild(div2);
+document.getElementById("toolbox").appendChild(toolbox);
+document.getElementById("filePicker").appendChild(filePickerSection);
 
 const fileObject = {
     fileNumber: -1,
@@ -112,7 +116,7 @@ export const animate = () => {
     // HTML GUI
     const azimuthDegrees = toDegrees(controls.getAzimuthalAngle());
     const polarDegrees = toDegrees(controls.getPolarAngle());
-    div.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
+    toolbox.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
     
     // Update file stuff
     const fileIndex = fileObject.fileNumber;
@@ -161,7 +165,7 @@ window.addEventListener( 'resize', onWindowResize, false );
 function onWindowResize(){
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize( window.innerWidth / 2, window.innerHeight / 2);
 
 }
 

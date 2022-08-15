@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import './style.css';
+import './styles.scss';
 import { animate } from './scripts/rotationEditor';
-
 animate();
