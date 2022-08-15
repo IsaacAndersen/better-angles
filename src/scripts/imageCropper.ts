@@ -95,7 +95,7 @@ class ImageCropper {
         canvas.addEventListener('mouseup', endDrag.bind(this));
 
         window.requestAnimationFrame(this.animate.bind(this));
-        document.body.appendChild(canvas);
+        document.getElementById('rotator').appendChild(canvas);
     }
 
     setBoundingBox(this: ImageCropper, boundingBox: BoundingBox) {

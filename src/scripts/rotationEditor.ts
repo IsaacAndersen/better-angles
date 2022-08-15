@@ -5,6 +5,12 @@ import { GUI } from 'dat.gui';
 import CanvasRotator from './canvasRotator';
 import ImageCropper, { BoundingBox } from './imageCropper';
 
+const statusTable = document.createElement('table');
+const statusTableRow = document.createElement('tr');
+statusTable.appendChild(statusTableRow);
+
+document.body.appendChild(statusTable);
+
 const table = document.createElement('table');
 const row = document.createElement('tr');
 table.appendChild(row);
@@ -37,7 +43,6 @@ controls.update();
 const canvasRotator = new CanvasRotator();
 scene.add(canvasRotator.threeObject);
 
-
 const image = document.createElement("img");
 image.id = "" + Math.random();
 image.style.display = "none";
@@ -48,7 +53,7 @@ const imageCropper = new ImageCropper(image);
 // Super circular dependency checkkk.
 imageCropper.canvasRotator = canvasRotator;
 canvasRotator.croppedCanvas = imageCropper.croppedCanvas;
-document.body.appendChild(imageCropper.croppedCanvas);
+document.getElementById('rotator').appendChild(imageCropper.croppedCanvas);
 
 const toolbox = document.createElement("div");
 // TODO: Move to CSS style or something.
@@ -71,6 +76,14 @@ filePicker.id = "getFile";
 filePicker.multiple = true;
 filePicker.onchange = (event: any) => {
     files = event.target.files;
+
+    const fileCells = [];
+    for (let i = 0; i < files.length; i++) {
+        const cell = document.createElement("td");
+        cell.id = "file_" + files.item(i).name;
+        fileCells.push(cell);    
+    }
+    statusTableRow.replaceChildren(...fileCells);
 }
 
 const downloadAnchor = document.createElement("a");
@@ -88,16 +101,19 @@ const fileObject = {
 };
 
 // Make a GUI
-const gui = new GUI()
-const cameraFolder = gui.addFolder('Camera')
-cameraFolder.add(fileObject, 'fileNumber', -1, files?.length ?? 0)
-cameraFolder.open()
+const fileNumberInput = document.createElement("input");
+fileNumberInput.type = "number";
+fileNumberInput.valueAsNumber = 0;
+fileNumberInput.onchange = (event: any) => {
+    fileNumberInput.valueAsNumber = Math.min(Math.max(0, event.target.value), files.length - 1);
+};
+toolbox.appendChild(fileNumberInput);
 
 const toDegrees = (radians: number) => {
     return radians * (180 / Math.PI);
 }
 
-let oldFileIndex = fileObject.fileNumber;
+let oldFileIndex = fileNumberInput.valueAsNumber;
 
 type FileData = {
     faceBoundingBox: BoundingBox;
@@ -109,23 +125,23 @@ export const animate = () => {
 	// required if controls.enableDamping or controls.autoRotate are set to true
 	controls.update();
 
-    // Update GUI
-    cameraFolder.__controllers[0].max(filePicker?.files?.length ?? 0);
-    cameraFolder.__controllers[0].updateDisplay();
-
     // HTML GUI
     const azimuthDegrees = toDegrees(controls.getAzimuthalAngle());
     const polarDegrees = toDegrees(controls.getPolarAngle());
-    toolbox.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
+    // toolbox.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
     
     // Update file stuff
-    const fileIndex = fileObject.fileNumber;
+    const fileIndex = fileNumberInput.valueAsNumber;
     if (fileIndex !== oldFileIndex && files.item(fileIndex)) {
         const nameOfFile = files.item(oldFileIndex)?.name.split(".")[0]
+        const idOfOldFile = "file_" + files.item(oldFileIndex).name;
         fileAlignmentData[nameOfFile] = {
             faceBoundingBox: imageCropper.boundingBox,
             faceRotation: camera.rotation,
         };
+
+        const oldFileCell = document.getElementById(idOfOldFile);
+        oldFileCell.style.background = "green";
 
         const blob = new Blob([JSON.stringify(fileAlignmentData)], {type: 'application/json'});
         const url = window.URL.createObjectURL(blob);
@@ -166,7 +182,6 @@ function onWindowResize(){
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth / 2, window.innerHeight / 2);
-
 }
 
 // DOWNLOAD
