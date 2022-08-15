@@ -16,12 +16,12 @@ probably gonna do some vanilla js + three.js
 
 | attribute | description |
 |-----------|-------------|
-| `x` | rotation (degrees?) |
-| `y` | rotation (degrees?) |
-| `z` | rotation (degrees?) |
+|boundingBox| The bounding box of montys face in the image. Use this to center/normalize viewing angle. |
+| rotation | Euler angles of rotation from the camera. |
 | `timeToProcess` | time spent looking at this photo in the editor (seconds) |
 
 
 ## timeline
 
 08/02/2022 - i guess i'll do it this weekend? writing here so i don't forget
+08/14/2022 - kinda got the annotator working. still really ugly. may finish up throughout the week and make pretty.
