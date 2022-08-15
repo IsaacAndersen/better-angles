@@ -16,8 +16,8 @@ probably gonna do some vanilla js + three.js
 
 | attribute | description |
 |-----------|-------------|
-|boundingBox| The bounding box of montys face in the image. Use this to center/normalize viewing angle. |
-| rotation | Euler angles of rotation from the camera. |
+|`boundingBox`| The bounding box of montys face in the image. Use this to center/normalize viewing angle. |
+| `rotation` | Euler angles of rotation from the camera. |
 | `timeToProcess` | time spent looking at this photo in the editor (seconds) |
 
 
