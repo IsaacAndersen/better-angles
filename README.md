@@ -23,5 +23,5 @@ probably gonna do some vanilla js + three.js
 
 ## timeline
 
-08/02/2022 - i guess i'll do it this weekend? writing here so i don't forget
-08/14/2022 - kinda got the annotator working. still really ugly. may finish up throughout the week and make pretty.
+- 08/02/2022 - i guess i'll do it this weekend? writing here so i don't forget
+- 08/14/2022 - kinda got the annotator working. still really ugly. may finish up throughout the week and make pretty.
