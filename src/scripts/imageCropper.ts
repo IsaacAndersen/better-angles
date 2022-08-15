@@ -1,4 +1,4 @@
-import ImageRotator from "./imageRotator";
+import CanvasRotator from "./canvasRotator";
 
 export type BoundingBox = {
     x: number;
@@ -23,7 +23,7 @@ const getCoveredBoundingBox = (startPoint: CanvasPoint, endPoint: CanvasPoint) =
  * Displays an image and optionally allows the user to crop it.
  */
 class ImageCropper {
-    imageRotator: ImageRotator | null;
+    canvasRotator: CanvasRotator | null;
     canvas: HTMLCanvasElement;
     croppedCanvas: HTMLCanvasElement;
     image: HTMLImageElement | null;
@@ -106,7 +106,7 @@ class ImageCropper {
         this.croppedCanvas.style.height = `${boundingBox.height}px`;
         const ctx = this.croppedCanvas.getContext('2d');
         ctx.drawImage(this.canvas, boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, 0, 0, boundingBox.width, boundingBox.height);
-        this.imageRotator?.setTextureNeedsUpdate();
+        this.canvasRotator?.setTextureNeedsUpdate();
     }
 
     setSize(this: ImageCropper, width: number, height: number) {

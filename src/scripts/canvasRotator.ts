@@ -7,15 +7,14 @@ type PlaneParams = {
 };
 
 /**
- * Creates an image plane with front and back faces.
+ * Creates an canvas plane with front and back faces.
  * 
  * @param addRotationRings Whether to display rotation rings around
  */
-class ImageRotator {
+class CanvasRotator {
     croppedCanvas: HTMLCanvasElement | null;
-    image: HTMLImageElement;
     threeObject: THREE.Object3D;
-    imagePlane: THREE.Group; 
+    canvasPlane: THREE.Group; 
 
     private compassRingParams: PlaneParams[] = [
         // Green => Rotation about X axis
@@ -27,17 +26,12 @@ class ImageRotator {
     ];
 
     constructor(addRotationRings: boolean = true) {
-        const image = document.createElement("img");
-        image.id = "" + Math.random();
-        image.style.display = "none";
-        document.body.appendChild(image);
-        this.image = image;
         this.threeObject = new THREE.Object3D();
 
         // Add an image, facing the camera.
         this.compassRingParams
             .slice(0, 1)
-            .map(this.addImagePlane.bind(this));
+            .map(this.addCanvasPlane.bind(this));
 
         if (addRotationRings) {
             this.compassRingParams
@@ -45,8 +39,8 @@ class ImageRotator {
         }
     }
 
-    setTextureNeedsUpdate(this: ImageRotator) {
-        this.imagePlane.children.forEach((child, _) => {
+    setTextureNeedsUpdate(this: CanvasRotator) {
+        this.canvasPlane.children.forEach((child, _) => {
             const mesh = (<THREE.Mesh> child);
             const material = mesh.material as THREE.MeshBasicMaterial;
             const newTexture = new THREE.CanvasTexture(this.croppedCanvas);
@@ -62,24 +56,7 @@ class ImageRotator {
         });
     }
 
-    setImageSource(this: ImageRotator, imageSource: string) {
-        this.image.src = imageSource;
-        this.imagePlane.children.forEach((child, _) => {
-            const mesh = (<THREE.Mesh> child);
-            const material = mesh.material as THREE.MeshBasicMaterial;
-            const newTexture = new THREE.CanvasTexture(this.croppedCanvas);
-
-            if (child.name === "back") {
-                newTexture.center = new THREE.Vector2(0.5, 0.5);
-                newTexture.rotation = Math.PI;
-            }
-
-            material.map = newTexture;
-            material.map.needsUpdate = true;
-        });
-    }
-
-    makeRing(this: ImageRotator, params: PlaneParams) {
+    makeRing(this: CanvasRotator, params: PlaneParams) {
         const geometry = new THREE.TorusGeometry(5, 0.01, 64, 64);
         const material = new THREE.MeshBasicMaterial( { color: params.color, side: THREE.DoubleSide } );
         const mesh = new THREE.Mesh( geometry, material );
@@ -88,13 +65,13 @@ class ImageRotator {
     }
 
     // Display an image on a plane
-    addImagePlane(this: ImageRotator, params: PlaneParams) {
+    addCanvasPlane(this: CanvasRotator, params: PlaneParams) {
         const geometry = new THREE.PlaneGeometry(10, 10);
         const geometryBack = new THREE.PlaneGeometry(10, 10);
         geometryBack.applyMatrix4( new THREE.Matrix4().makeRotationY( Math.PI ) );
 
-        const texture = new THREE.Texture(this.image);
-        const textureBack = new THREE.Texture(this.image);
+        const texture = new THREE.Texture(this.croppedCanvas);
+        const textureBack = new THREE.Texture(this.croppedCanvas);
         textureBack.flipY = false;
 
         const material = new THREE.MeshBasicMaterial({
@@ -114,14 +91,14 @@ class ImageRotator {
         meshBack.rotation.copy(params.rotation);
         meshBack.name = "back";
 
-        const imagePlane = new THREE.Group();
+        const canvasPlane = new THREE.Group();
 
-        imagePlane.add(mesh);
-        imagePlane.add(meshBack);
+        canvasPlane.add(mesh);
+        canvasPlane.add(meshBack);
 
-        this.imagePlane = imagePlane;
-        this.threeObject.add(imagePlane);
+        this.canvasPlane = canvasPlane;
+        this.threeObject.add(canvasPlane);
     };
 }
 
-export default ImageRotator;
+export default CanvasRotator;

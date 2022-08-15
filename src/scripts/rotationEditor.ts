@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'dat.gui';
-import ImageRotator from './imageRotator';
+import CanvasRotator from './canvasRotator';
 import ImageCropper, { BoundingBox } from './imageCropper';
 
 
@@ -24,14 +24,20 @@ controls.enableZoom = false;
 controls.update();
 
 // Add the image to the scene.
-const imageRotator = new ImageRotator();
-scene.add(imageRotator.threeObject);
+const canvasRotator = new CanvasRotator();
+scene.add(canvasRotator.threeObject);
+
+
+const image = document.createElement("img");
+image.id = "" + Math.random();
+image.style.display = "none";
+document.body.appendChild(image);
 
 // Create an image cropper.
-const imageCropper = new ImageCropper(imageRotator.image);
+const imageCropper = new ImageCropper(image);
 // Super circular dependency checkkk.
-imageCropper.imageRotator = imageRotator;
-imageRotator.croppedCanvas = imageCropper.croppedCanvas;
+imageCropper.canvasRotator = canvasRotator;
+canvasRotator.croppedCanvas = imageCropper.croppedCanvas;
 document.body.appendChild(imageCropper.croppedCanvas);
 
 const div = document.createElement("div");
@@ -99,11 +105,16 @@ export const animate = () => {
 	// required if controls.enableDamping or controls.autoRotate are set to true
 	controls.update();
 
+    // Update GUI
     cameraFolder.__controllers[0].max(filePicker?.files?.length ?? 0);
     cameraFolder.__controllers[0].updateDisplay();
+
+    // HTML GUI
     const azimuthDegrees = toDegrees(controls.getAzimuthalAngle());
     const polarDegrees = toDegrees(controls.getPolarAngle());
     div.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
+    
+    // Update file stuff
     const fileIndex = fileObject.fileNumber;
     if (fileIndex !== oldFileIndex && files.item(fileIndex)) {
         const nameOfFile = files.item(oldFileIndex)?.name.split(".")[0]
@@ -121,7 +132,7 @@ export const animate = () => {
         var reader = new FileReader();
 
         reader.onload = (event: ProgressEvent<FileReader>) => {
-            imageRotator.setImageSource(event.target.result as string);
+            image.src = event.target.result as string
         };
 
         reader.readAsDataURL(files.item(fileIndex));
@@ -134,7 +145,6 @@ export const animate = () => {
 
 window.addEventListener("keydown", (event) => {
     event.preventDefault();
-    console.log("woah");
     console.log(fileObject.fileNumber);
     console.log(event.key);
     if (event.key === "ArrowLeft") {
@@ -143,8 +153,6 @@ window.addEventListener("keydown", (event) => {
     if (event.key === "ArrowRight") {
         fileObject.fileNumber = (fileObject.fileNumber + 1) % files.length;
     }
-    console.log('new number')
-    console.log(fileObject.fileNumber);
     return;
 });
 
