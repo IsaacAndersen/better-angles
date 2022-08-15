@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from 'dat.gui';
 import ImageRotator from './imageRotator';
-import ImageCropper from './imageCropper';
+import ImageCropper, { BoundingBox } from './imageCropper';
 
 
 // Setup THREE.js scene
@@ -29,6 +29,10 @@ scene.add(imageRotator.threeObject);
 
 // Create an image cropper.
 const imageCropper = new ImageCropper(imageRotator.image);
+// Super circular dependency checkkk.
+imageCropper.imageRotator = imageRotator;
+imageRotator.croppedCanvas = imageCropper.croppedCanvas;
+document.body.appendChild(imageCropper.croppedCanvas);
 
 const div = document.createElement("div");
 // TODO: Move to CSS style or something.
@@ -59,7 +63,12 @@ filePicker.onchange = (event: any) => {
     files = event.target.files;
 }
 
+const downloadAnchor = document.createElement("a");
+downloadAnchor.innerHTML = "Download Data";
+downloadAnchor.href = "#";
+
 div2.appendChild(filePicker);
+div2.appendChild(downloadAnchor);
 
 document.body.appendChild(div);
 document.body.appendChild(div2);
@@ -80,6 +89,12 @@ const toDegrees = (radians: number) => {
 
 let oldFileIndex = fileObject.fileNumber;
 
+type FileData = {
+    faceBoundingBox: BoundingBox;
+    faceRotation: THREE.Euler;
+}
+const fileAlignmentData: Record<string, FileData> = {};
+
 export const animate = () => {
 	// required if controls.enableDamping or controls.autoRotate are set to true
 	controls.update();
@@ -91,43 +106,27 @@ export const animate = () => {
     div.innerHTML = `azimuthal angle: ${azimuthDegrees.toFixed(3)}<br> polar angle: ${polarDegrees.toFixed(3)}<br>camera angle y: ${toDegrees(camera.rotation.y).toFixed(3)}<br> camera angle x: ${toDegrees(camera.rotation.x).toFixed(3)}`;
     const fileIndex = fileObject.fileNumber;
     if (fileIndex !== oldFileIndex && files.item(fileIndex)) {
-        // Download the camera orientation
-        const blob = new Blob([JSON.stringify(camera.rotation)], {type: 'application/json'});
-        // (B) CREATE DOWNLOAD LINK
-        var url = window.URL.createObjectURL(blob);
-        var anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = files.item(fileIndex).name.split(".")[0] + ".json";
-        // (C) Force download
-        anchor.click();
-        window.URL.revokeObjectURL(url);
+        const nameOfFile = files.item(oldFileIndex)?.name.split(".")[0]
+        fileAlignmentData[nameOfFile] = {
+            faceBoundingBox: imageCropper.boundingBox,
+            faceRotation: camera.rotation,
+        };
+
+        const blob = new Blob([JSON.stringify(fileAlignmentData)], {type: 'application/json'});
+        const url = window.URL.createObjectURL(blob);
+        downloadAnchor.href = url;
+        downloadAnchor.download = `alignmentData_${Object.keys(fileAlignmentData).length}_images.json`;
+
+        imageCropper.boundingBox = null;
         var reader = new FileReader();
-        var imgtag = imageRotator.image;
 
         reader.onload = (event: ProgressEvent<FileReader>) => {
-            imgtag.src = event.target.result as string;
-            imageRotator.imagePlane.children.forEach((child, _) => {
-                const mesh = (<THREE.Mesh> child);
-                // mesh.geometry.scale(ratio, 1, 1);
-
-                const material = mesh.material as THREE.MeshBasicMaterial;
-                const newTexture = new THREE.Texture(imgtag);
-    
-                if (child.name === "back") {
-                    newTexture.center = new THREE.Vector2(0.5, 0.5);
-                    newTexture.rotation = Math.PI;
-                }
-    
-                material.map = newTexture;
-                material.map.needsUpdate = true;
-            });
+            imageRotator.setImageSource(event.target.result as string);
         };
 
         reader.readAsDataURL(files.item(fileIndex));
         }
     oldFileIndex = fileIndex;
-
-    // div.innerHTML += `<br>ratio: ${ratio}`;
 
 	renderer.render( scene, camera );
     requestAnimationFrame( animate );
@@ -157,3 +156,6 @@ function onWindowResize(){
     renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
+
+// DOWNLOAD
+// // Download the camera orientation

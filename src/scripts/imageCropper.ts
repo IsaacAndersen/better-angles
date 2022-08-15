@@ -1,4 +1,6 @@
-type BoundingBox = {
+import ImageRotator from "./imageRotator";
+
+export type BoundingBox = {
     x: number;
     y: number;
     width: number;
@@ -21,7 +23,9 @@ const getCoveredBoundingBox = (startPoint: CanvasPoint, endPoint: CanvasPoint) =
  * Displays an image and optionally allows the user to crop it.
  */
 class ImageCropper {
+    imageRotator: ImageRotator | null;
     canvas: HTMLCanvasElement;
+    croppedCanvas: HTMLCanvasElement;
     image: HTMLImageElement | null;
     context: CanvasRenderingContext2D;
 
@@ -32,8 +36,10 @@ class ImageCropper {
 
     constructor(image: HTMLImageElement | null) {
         const canvas = document.createElement("canvas");
+        const croppedCanvas = document.createElement("canvas");
 
         this.canvas = canvas;
+        this.croppedCanvas = croppedCanvas;
         this.context = canvas.getContext('2d');
         this.image = image;
 
@@ -42,6 +48,11 @@ class ImageCropper {
         canvas.style.width = "500px";
         canvas.style.height = "500px";
         canvas.style.border = "1px solid black";
+
+        croppedCanvas.width = 500;
+        croppedCanvas.height = 500;
+        croppedCanvas.style.width = "500px";
+        croppedCanvas.style.height = "500px";
 
         const startDrag = (event: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
@@ -74,6 +85,7 @@ class ImageCropper {
                     x: event.clientX - rect.left,
                     y: event.clientY - rect.top
                 });
+                this.setBoundingBox(this.boundingBox);
                 console.log("Bound box: ", this.boundingBox);
             }
         }
@@ -86,7 +98,18 @@ class ImageCropper {
         document.body.appendChild(canvas);
     }
 
-    setSize(width: number, height: number) {
+    setBoundingBox(this: ImageCropper, boundingBox: BoundingBox) {
+        this.boundingBox = boundingBox;
+        this.croppedCanvas.width = boundingBox.width;
+        this.croppedCanvas.height = boundingBox.height;
+        this.croppedCanvas.style.width = `${boundingBox.width}px`;
+        this.croppedCanvas.style.height = `${boundingBox.height}px`;
+        const ctx = this.croppedCanvas.getContext('2d');
+        ctx.drawImage(this.canvas, boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, 0, 0, boundingBox.width, boundingBox.height);
+        this.imageRotator?.setTextureNeedsUpdate();
+    }
+
+    setSize(this: ImageCropper, width: number, height: number) {
         this.canvas.width = width;
         this.canvas.height = height;
         this.canvas.style.width = `${width}px`;

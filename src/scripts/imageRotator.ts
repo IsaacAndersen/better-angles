@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BoundingBox } from './imageCropper';
 
 type PlaneParams = {
     rotation: THREE.Euler;
@@ -11,6 +12,7 @@ type PlaneParams = {
  * @param addRotationRings Whether to display rotation rings around
  */
 class ImageRotator {
+    croppedCanvas: HTMLCanvasElement | null;
     image: HTMLImageElement;
     threeObject: THREE.Object3D;
     imagePlane: THREE.Group; 
@@ -41,6 +43,40 @@ class ImageRotator {
             this.compassRingParams
             .map(this.makeRing.bind(this));
         }
+    }
+
+    setTextureNeedsUpdate(this: ImageRotator) {
+        this.imagePlane.children.forEach((child, _) => {
+            const mesh = (<THREE.Mesh> child);
+            const material = mesh.material as THREE.MeshBasicMaterial;
+            const newTexture = new THREE.CanvasTexture(this.croppedCanvas);
+            newTexture.needsUpdate = true;
+
+            if (child.name === "back") {
+                newTexture.center = new THREE.Vector2(0.5, 0.5);
+                newTexture.rotation = Math.PI;
+            }
+
+            material.map = newTexture;
+            material.map.needsUpdate = true;
+        });
+    }
+
+    setImageSource(this: ImageRotator, imageSource: string) {
+        this.image.src = imageSource;
+        this.imagePlane.children.forEach((child, _) => {
+            const mesh = (<THREE.Mesh> child);
+            const material = mesh.material as THREE.MeshBasicMaterial;
+            const newTexture = new THREE.CanvasTexture(this.croppedCanvas);
+
+            if (child.name === "back") {
+                newTexture.center = new THREE.Vector2(0.5, 0.5);
+                newTexture.rotation = Math.PI;
+            }
+
+            material.map = newTexture;
+            material.map.needsUpdate = true;
+        });
     }
 
     makeRing(this: ImageRotator, params: PlaneParams) {
